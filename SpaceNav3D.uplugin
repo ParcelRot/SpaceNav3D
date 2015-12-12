@@ -13,8 +13,9 @@
 	"Modules": [
 		{
 			"Name": "SpaceNav3D",
-			"Type": "Developer",
-			"LoadingPhase": "Default"
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms" : [ "Win64", "Win32" ]
 		}
 	],
 	"EnabledByDefault": false,
