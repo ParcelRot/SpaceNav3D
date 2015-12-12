@@ -7,6 +7,8 @@ public class SpaceNav3D : ModuleRules
 	public SpaceNav3D(TargetInfo Target)
 	{
 
+        PrivateIncludePathModuleNames.Add("TargetPlatform");
+        
         string ThreeDxWareSDKDir = UEBuildConfiguration.UEThirdPartySourceDirectory + "3DxWare";
 
         // Ensure correct include and link paths for xinput so the correct dll is loaded (xinput1_3.dll)
