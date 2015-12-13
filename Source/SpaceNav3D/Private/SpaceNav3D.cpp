@@ -2,6 +2,8 @@
 
 #include "SpaceNav3DPrivatePCH.h"
 
+DEFINE_LOG_CATEGORY_STATIC(LogSpaceNav3DController, Log, All);
+
 #if PLATFORM_WINDOWS
 
 class FSpaceNav3DController;
@@ -21,13 +23,13 @@ public:
 	FSpaceNav3DController(const TSharedRef< FGenericApplicationMessageHandler >& InMessageHandler)
 		: MessageHandler(InMessageHandler), bNewEvent(false), m_DevHdl(NULL)
 	{
+		UE_LOG(LogSpaceNav3DController, Display, TEXT("Input Device creation"));
 		// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 		SiOpenData oData;                        //OS Independent data to open ball  
 
 		if (SiInitialize() == SPW_DLL_LOAD_ERROR)   //init the 3DxWare input library
 		{
-			MessageBox(NULL, _T("Error: Could not load SiAppDll dll files"),
-				NULL, MB_ICONEXCLAMATION);
+			UE_LOG(LogSpaceNav3DController, Error, TEXT("Could not load SiAppDll dll files"));
 			return;
 		}
 
@@ -35,8 +37,10 @@ public:
 		if (m_hwnd == NULL)
 		{
 			SiTerminate();  //called to shut down the 3DxWare input library 
+			UE_LOG(LogSpaceNav3DController, Error, TEXT("Could not find UE4's HWND handle"));
 			return;
 		}
+		UE_LOG(LogSpaceNav3DController, Display, TEXT("UE4 hwnd = %x"), m_hwnd);
 
 		SiOpenWinInit(&oData, m_hwnd);          //init Win. platform specific data  
 		SiSetUiMode(&m_DevHdl, SI_UI_ALL_CONTROLS); //Config SoftButton Win Display 
@@ -46,8 +50,9 @@ public:
 		if ((m_DevHdl = SiOpen("FSpaceNav3DModule", SI_ANY_DEVICE, SI_NO_MASK,
 			SI_EVENT, &oData)) == NULL)
 		{
-			SiTerminate();  //called to shut down the 3DxWare input library 
-			//throw 0;
+			SiTerminate();  //called to shut down the 3DxWare input library
+			UE_LOG(LogSpaceNav3DController, Error, TEXT("Could not open the Space Navigator"));
+			return;
 		}
 
 		FMemory::Memzero(&ControllerState, sizeof(ControllerState));
@@ -132,8 +137,10 @@ bool FSpaceNav3DMessageHandler::ProcessMessage(HWND hwnd, uint32 msg, WPARAM wPa
 {
 	static uint32 spwid = 0;
 
-	if (spwid == 0)
+	if (spwid == 0) {
 		spwid = RegisterWindowMessage(_T("SpaceWareMessage00"));
+		UE_LOG(LogSpaceNav3DController, Display, TEXT("SpaceWare port = %d, hwnd = %x"), spwid, hwnd);
+	}
 
 	if (msg == spwid)
 	{
@@ -173,6 +180,7 @@ bool FSpaceNav3DMessageHandler::ProcessMessage(HWND hwnd, uint32 msg, WPARAM wPa
 			case SI_ZERO_EVENT:
 				//SiSetLEDs(controller->m_DevHdl, show = !show);  // toggle LEDS on any button
 				FMemory::Memzero(&controller->ControllerState, sizeof(controller->ControllerState));
+				controller->bNewEvent = true;
 				break;
 
 			case  SI_BUTTON_EVENT:
@@ -185,11 +193,12 @@ bool FSpaceNav3DMessageHandler::ProcessMessage(HWND hwnd, uint32 msg, WPARAM wPa
 				{
 					 // do something when a button is released
 				}
+				controller->bNewEvent = true;
 				break;
 			} /* end switch */
 		} /* end SiGetEvent */
 	}
-	return true;
+	return false; // we MUST return false here otherwise weird things like Tooltips not rendering right in UE4 Editor!
 }
 
 class FSpaceNav3DModule : public IInputDeviceModule
@@ -200,7 +209,7 @@ class FSpaceNav3DModule : public IInputDeviceModule
 	}
 };
 
-IMPLEMENT_MODULE(FSpaceNav3DModule, FSpaceNav3DController)
+IMPLEMENT_MODULE(FSpaceNav3DModule, SpaceNav3D)
 
 
 #endif
