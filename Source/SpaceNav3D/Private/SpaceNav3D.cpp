@@ -197,8 +197,10 @@ bool FSpaceNav3DMessageHandler::ProcessMessage(HWND hwnd, uint32 msg, WPARAM wPa
 				break;
 			} /* end switch */
 		} /* end SiGetEvent */
+
+		return true;
 	}
-	return false; // we MUST return false here otherwise weird things like Tooltips not rendering right in UE4 Editor!
+	return false; // nope, wasn't us
 }
 
 class FSpaceNav3DModule : public IInputDeviceModule
