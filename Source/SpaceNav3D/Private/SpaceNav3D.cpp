@@ -126,11 +126,23 @@ public:
 	TSharedRef<FGenericApplicationMessageHandler> MessageHandler;
 };
 
-static float ShortToNormalizedFloat(SHORT AxisVal)
+static float ShortToNormalizedFloat(long AxisVal)
 {
 	// normalize [-32768..32767] -> [-1..1]
-	const float Norm = (AxisVal <= 0 ? 2048.f : 2047.f);
-	return float(AxisVal) / Norm;
+	const float Norm = (AxisVal <= 0 ? 2100.f : 2100.f);
+	float prenorm = float(AxisVal) / Norm;
+
+	if (prenorm == 0.0)
+		return 0.0;
+
+	prenorm *= 0.8;
+
+	if (GIsEditor)
+	{
+		// scale (0,1] into [0.2,1] range to get around hardcoded deadzone in editor
+		return prenorm + (AxisVal <= 0 ? -0.2f : 0.2f);
+	}
+	return 3.0*prenorm + (AxisVal <= 0 ? -0.2f : 0.2f);
 }
 
 bool FSpaceNav3DMessageHandler::ProcessMessage(HWND hwnd, uint32 msg, WPARAM wParam, LPARAM lParam, int32& OutResult)
@@ -173,6 +185,9 @@ bool FSpaceNav3DMessageHandler::ProcessMessage(HWND hwnd, uint32 msg, WPARAM wPa
 					controller->ControllerState.RightTriggerAnalog = ShortToNormalizedFloat(Event.u.spwData.mData[SI_TY]);
 					controller->ControllerState.LeftTriggerAnalog = 0.0;
 				}
+
+				// We have one more axis but don't know what to map it to
+				//controller->ControllerState.?????? = ShortToNormalizedFloat(Event.u.spwData.mData[SI_RZ]);  // rotate up/down
 
 				controller->bNewEvent = true;
 				break;
