@@ -95,6 +95,9 @@ public:
 			MessageHandler->OnControllerAnalog(FGamepadKeyNames::RightAnalogY, 0, ControllerState.RightAnalogY);  // rotate up/down
 			MessageHandler->OnControllerAnalog(FGamepadKeyNames::LeftTriggerAnalog, 0, ControllerState.LeftTriggerAnalog); // Pan vertical
 			MessageHandler->OnControllerAnalog(FGamepadKeyNames::RightTriggerAnalog, 0, ControllerState.RightTriggerAnalog); // Pan vertical
+
+			// We're appropriating this one because there is no equivalent for the gamepay - I hope you don't mind
+			MessageHandler->OnControllerAnalog(FGamepadKeyNames::MotionController_Left_Thumbstick_X, 0, ControllerState.RollAnalog); // roll
 		}
 	}
 
@@ -118,6 +121,7 @@ public:
 		float RightAnalogY;
 		float LeftTriggerAnalog;
 		float RightTriggerAnalog;
+		float RollAnalog;
 	} ControllerState, PrevControllerState;
 
 	FSpaceNav3DMessageHandler mouse_handler; // 3D mouse events sent to UE window
@@ -126,7 +130,7 @@ public:
 	TSharedRef<FGenericApplicationMessageHandler> MessageHandler;
 };
 
-static float ShortToNormalizedFloat(long AxisVal)
+static float LongToNormalizedFloat(long AxisVal)
 {
 	// normalize [-32768..32767] -> [-1..1]
 	const float Norm = (AxisVal <= 0 ? 2100.f : 2100.f);
@@ -172,22 +176,22 @@ bool FSpaceNav3DMessageHandler::ProcessMessage(HWND hwnd, uint32 msg, WPARAM wPa
 			{
 			case SI_MOTION_EVENT:
 				//SiSetLEDs(controller->m_DevHdl, show = !show);  // toggle LEDS on any button
-				controller->ControllerState.LeftAnalogX = ShortToNormalizedFloat(Event.u.spwData.mData[SI_TX]); // pan left/right
-				controller->ControllerState.LeftAnalogY = ShortToNormalizedFloat(Event.u.spwData.mData[SI_TZ]); // pan forward/backward
-				controller->ControllerState.RightAnalogX = -ShortToNormalizedFloat(Event.u.spwData.mData[SI_RY]); // rotate left/right
-				controller->ControllerState.RightAnalogY = ShortToNormalizedFloat(Event.u.spwData.mData[SI_RX]);  // rotate up/down
+				controller->ControllerState.LeftAnalogX = LongToNormalizedFloat(Event.u.spwData.mData[SI_TX]); // pan left/right
+				controller->ControllerState.LeftAnalogY = LongToNormalizedFloat(Event.u.spwData.mData[SI_TZ]); // pan forward/backward
+				controller->ControllerState.RightAnalogX = -LongToNormalizedFloat(Event.u.spwData.mData[SI_RY]); // rotate left/right
+				controller->ControllerState.RightAnalogY = LongToNormalizedFloat(Event.u.spwData.mData[SI_RX]);  // rotate up/down
+
+				if (!GIsEditor) // really weird to allow roll in editor, so we won't!
+					controller->ControllerState.RollAnalog = LongToNormalizedFloat(Event.u.spwData.mData[SI_RZ]);  // rotate up/down
 
 				if (Event.u.spwData.mData[SI_TZ] >= 0) {
-					controller->ControllerState.LeftTriggerAnalog = -ShortToNormalizedFloat(Event.u.spwData.mData[SI_TY]);
+					controller->ControllerState.LeftTriggerAnalog = -LongToNormalizedFloat(Event.u.spwData.mData[SI_TY]);
 					controller->ControllerState.RightTriggerAnalog = 0.0;
 				}
 				else if (Event.u.spwData.mData[SI_TZ] < 0) {
-					controller->ControllerState.RightTriggerAnalog = ShortToNormalizedFloat(Event.u.spwData.mData[SI_TY]);
+					controller->ControllerState.RightTriggerAnalog = LongToNormalizedFloat(Event.u.spwData.mData[SI_TY]);
 					controller->ControllerState.LeftTriggerAnalog = 0.0;
 				}
-
-				// We have one more axis but don't know what to map it to
-				//controller->ControllerState.?????? = ShortToNormalizedFloat(Event.u.spwData.mData[SI_RZ]);  // rotate up/down
 
 				controller->bNewEvent = true;
 				break;
