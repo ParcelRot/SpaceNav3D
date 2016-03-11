@@ -84,22 +84,32 @@ public:
 	{
 	}
 
+	float AdjustedControllerValue(const float controllerValueInitial, const float SMDeadZone, const float linearPercent, const float multiplication)
+	{
+		float DeadZone = 0.2f - SMDeadZone; //UE4 deadzone minus the desired deadzone
+		float controllerValue;
+		controllerValue = (((controllerValueInitial > 0) ? 1.0f : -1.0f) * controllerValueInitial * controllerValueInitial * (1.0f - linearPercent) + controllerValueInitial * linearPercent) * multiplication / 2.0f;
+		if (controllerValueInitial > SMDeadZone)
+			controllerValue = controllerValue + DeadZone;
+		else if (controllerValueInitial < -SMDeadZone)
+			controllerValue = controllerValue - DeadZone;
+		return controllerValue;
+	}
+
 	virtual void SendControllerEvents() override
 	{
 		if (bNewEvent) {
 			bNewEvent = false;
-
-			MessageHandler->OnControllerAnalog(FGamepadKeyNames::LeftAnalogX, 0, ControllerState.LeftAnalogX); // pan left/right
-			MessageHandler->OnControllerAnalog(FGamepadKeyNames::LeftAnalogY, 0, ControllerState.LeftAnalogY); // pan forward/backward
-			MessageHandler->OnControllerAnalog(FGamepadKeyNames::RightAnalogX, 0, ControllerState.RightAnalogX); // rotate left/right
-			MessageHandler->OnControllerAnalog(FGamepadKeyNames::RightAnalogY, 0, ControllerState.RightAnalogY);  // rotate up/down
-			MessageHandler->OnControllerAnalog(FGamepadKeyNames::LeftTriggerAnalog, 0, ControllerState.LeftTriggerAnalog); // Pan vertical
-			MessageHandler->OnControllerAnalog(FGamepadKeyNames::RightTriggerAnalog, 0, ControllerState.RightTriggerAnalog); // Pan vertical
-
-			// We're appropriating this one because there is no equivalent for the gamepay - I hope you don't mind
+			MessageHandler->OnControllerAnalog(FGamepadKeyNames::LeftAnalogX, 0, AdjustedControllerValue(ControllerState.LeftAnalogX, 0.05f, 0.3f, 1.0f));
+			MessageHandler->OnControllerAnalog(FGamepadKeyNames::LeftAnalogY, 0, AdjustedControllerValue(ControllerState.LeftAnalogY, 0.05f, 0.3f, 1.0f));
+			MessageHandler->OnControllerAnalog(FGamepadKeyNames::RightAnalogX, 0, AdjustedControllerValue(ControllerState.RightAnalogX, 0.05f, 0.6f, 1.5f)); //I prefer it more linear
+			MessageHandler->OnControllerAnalog(FGamepadKeyNames::RightAnalogY, 0, AdjustedControllerValue(ControllerState.RightAnalogY, 0.05f, 0.3f, 1.0f));
+			MessageHandler->OnControllerAnalog(FGamepadKeyNames::LeftTriggerAnalog, 0, AdjustedControllerValue(ControllerState.LeftTriggerAnalog, 0.05f, 0.3f, 1.0f));
+			MessageHandler->OnControllerAnalog(FGamepadKeyNames::RightTriggerAnalog, 0, AdjustedControllerValue(ControllerState.RightTriggerAnalog, 0.05f, 0.3f, 1.0f));
 			MessageHandler->OnControllerAnalog(FGamepadKeyNames::MotionController_Left_Thumbstick_X, 0, ControllerState.RollAnalog); // roll
 		}
 	}
+
 
 	virtual bool Exec(UWorld* InWorld, const TCHAR* Cmd, FOutputDevice& Ar) override { return false; }
 
