@@ -1,7 +1,7 @@
 // Copyright 1998-2015 Epic Games, Inc. All Rights Reserved.
 
-#include "IInputInterface.h"
 #include "IInputDeviceModule.h"
+#include "IInputInterface.h"
 #include "IInputDevice.h"
 #include "SlateBasics.h"
 #include "WindowsApplication.h"

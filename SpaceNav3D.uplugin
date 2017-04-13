@@ -1,25 +1,21 @@
 {
-	"FileVersion": 3,
-	"Version": 1,
-	"VersionName": "0.1",
-	"FriendlyName": "SpaceNav3D",
+	"FileVersion" : 3,
+	"FriendlyName" : "SpaceNav3D",
+	"Version" : 1,
+	"VersionName" : "0.2a",
+	"CreatedBy" : "3DConnextion",
+	"CreatedByURL" : "http://www.3dconnexion.com/",
+	"DocsURL" : "",
 	"Description" : "InputDevice plugin for 3DConnexion Space Navigator",
 	"Category" : "Input Devices",
-	"CreatedBy": "",
-	"CreatedByURL": "",
-	"DocsURL": "",
-	"MarketplaceURL": "",
-	"SupportURL": "",
-	"Modules": [
+	"CanContainContent" : false,
+	"Modules" :
+	[
 		{
-			"Name": "SpaceNav3D",
-			"Type": "Runtime",
-			"LoadingPhase": "Default",
+			"Name" : "SpaceNav3D",
+			"Type" : "Editor",
+			"LoadingPhase" : "Default",
 			"WhitelistPlatforms" : [ "Win64", "Win32" ]
 		}
-	],
-	"EnabledByDefault": false,
-	"CanContainContent": false,
-	"IsBetaVersion": false,
-	"Installed": false
+	]
 }
