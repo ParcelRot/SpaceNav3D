@@ -16,7 +16,7 @@ An unofficial [3DConnexion](https://www.3dconnexion.eu) Space Navigator support 
 
 ## Developing
 
-If you want to develop for the plugin, you will need to download the 3DxWare SDK yourself from the [3DConnextion SDK Website](https://www.3dconnexion.eu/service/software-developer/licence-agreement/sdk-download.html) (requires free registration), and then extract it into the provided folder (ThirdParty/3DxWare SDK).
+If you want to develop for the plugin, you will need to download the 3DxWare SDK yourself from the [3DConnextion SDK Website](https://www.3dconnexion.eu/service/software-developer/licence-agreement/sdk-download.html) (requires free registration), and then extract it into the provided folder (ThirdParty/3DxWare SDK). The SDK terms prevent distribution by developers.
 
 ## Credit and License
 Plugin made by [ParcelRot](https://github.com/ParcelRot) and updated by [aaronsnoswell](https://github.com/aaronsnoswell). Point all questions to the main discussion thread.
