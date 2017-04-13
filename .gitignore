@@ -1,0 +1,4 @@
+
+# Ignore temporary build artefacts
+Binaries/
+Intermediate/
