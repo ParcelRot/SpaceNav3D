@@ -1,71 +1,92 @@
 // Copyright 1998-2015 Epic Games, Inc. All Rights Reserved.
 
 using UnrealBuildTool;
+using System.IO;
 
 public class SpaceNav3D : ModuleRules
 {
-	public SpaceNav3D(TargetInfo Target)
+    // Helper function to get the Plugin Path folder path
+    private string PluginPath
+    {
+        get { return Path.GetFullPath(Path.Combine(ModuleDirectory, "..", "..")); }
+    }
+
+    // Helper function to get the Third Party folder path
+    private string ThirdPartyPath
+    {
+        get { return Path.GetFullPath(Path.Combine(PluginPath, "ThirdParty")); }
+    }
+
+    public SpaceNav3D(TargetInfo Target)
 	{
-
-        PrivateIncludePathModuleNames.Add("TargetPlatform");
-        
-        string ThreeDxWareSDKDir = UEBuildConfiguration.UEThirdPartySourceDirectory + "3DxWare";
-
-        // Ensure correct include and link paths for xinput so the correct dll is loaded (xinput1_3.dll)
-        PublicSystemIncludePaths.Add(ThreeDxWareSDKDir + "/Inc");
-        if (Target.Platform == UnrealTargetPlatform.Win64)
-        {
-            PublicLibraryPaths.Add(ThreeDxWareSDKDir + "/Lib/x64");
-        }
-        else if (Target.Platform == UnrealTargetPlatform.Win32)
-        {
-            PublicLibraryPaths.Add(ThreeDxWareSDKDir + "/Lib/x86");
-        }
-        PublicAdditionalLibraries.Add("siapp.lib");
-        
         PublicIncludePaths.AddRange(
-			new string[] {
-				"SpaceNav3D/Public"
-				// ... add public include paths required here ...
-			}
-			);
-				
-		
-		PrivateIncludePaths.AddRange(
-			new string[] {
-				"SpaceNav3D/Private",
-				// ... add other private include paths required here ...
-			}
-			);
-			
-		
-		PublicDependencyModuleNames.AddRange(
-			new string[]
-			{
-				"Core",
-				// ... add other public dependencies that you statically link with here ...
-			}
-			);
-			
-		
-		PrivateDependencyModuleNames.AddRange(
-			new string[]
-			{
-				"CoreUObject",
-				"Engine",
-    			"InputDevice",
-				"Slate",
-				"SlateCore",
-				// ... add private dependencies that you statically link with here ...	
-			}
-			);
-		
-		
-		DynamicallyLoadedModuleNames.AddRange(
-			new string[]
-			{
-				// ... add any modules that your module loads dynamically here ...
-			}
-			);
-	}
+            new string[] {
+                "SpaceNav3D/Public"
+            }
+        );
+
+        PrivateIncludePaths.AddRange(
+            new string[] {
+                "SpaceNav3D/Private"
+            }
+        );
+
+        PublicDependencyModuleNames.AddRange(
+            new string[]
+            {
+                "Core",
+                "CoreUObject",
+                "Engine",
+                "SlateCore",
+                "Slate",
+                "InputCore",
+                "InputDevice"
+                // ... add other public dependencies that you statically link with here ...
+            }
+        );
+
+        PrivateDependencyModuleNames.AddRange(
+            new string[]
+            {
+                // ... add private dependencies that you statically link with here ...
+            }
+        );
+
+        DynamicallyLoadedModuleNames.AddRange(
+            new string[]
+            {
+                // ... add any modules that your module loads dynamically here ...
+            }
+        );
+
+        // Load the 3DxWare SDK
+        Load3DxWareSDK(Target);
+
+    }
+
+    /**
+     * Loads the 3DxWare SDK from the plugin's third party folder
+     */
+    private bool Load3DxWareSDK(TargetInfo Target)
+    {
+        // Test for compatability
+        if (!(Target.Platform == UnrealTargetPlatform.Win64) && !(Target.Platform == UnrealTargetPlatform.Win32))
+        {
+            return false;
+        }
+
+        // Build SDK path
+        string PlatformString = (Target.Platform == UnrealTargetPlatform.Win64) ? "x64" : "x86";
+        string ThreeDeexWareSDKDir = Path.Combine(ThirdPartyPath, "3DxWare SDK");
+
+        // Add .libs
+        PublicLibraryPaths.Add(Path.Combine(ThreeDeexWareSDKDir, "Lib", PlatformString));
+        PublicAdditionalLibraries.Add("siapp.lib");
+
+        // Add include paths
+        PublicIncludePaths.Add(Path.Combine(ThreeDeexWareSDKDir, "Inc"));
+        PrivateIncludePathModuleNames.Add("TargetPlatform");
+
+        return true;
+    }
 }
