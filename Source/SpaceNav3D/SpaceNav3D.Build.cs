@@ -73,6 +73,14 @@ public class SpaceNav3D : ModuleRules
                     }
                 );
             }
+
+            if (UEBuildConfiguration.bBuildEditor)
+                PublicDependencyModuleNames.AddRange(
+                    new string[]
+                    {
+                        "UnrealEd",
+                    }
+                );
         }
 
         PrivateDependencyModuleNames.AddRange(

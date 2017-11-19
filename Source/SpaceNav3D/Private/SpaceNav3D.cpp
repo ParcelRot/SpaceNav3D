@@ -107,6 +107,67 @@ public:
 			MessageHandler->OnControllerAnalog(FGamepadKeyNames::LeftTriggerAnalog, 0, AdjustedControllerValue(ControllerState.LeftTriggerAnalog, 0.05f, 0.3f, 1.0f));
 			MessageHandler->OnControllerAnalog(FGamepadKeyNames::RightTriggerAnalog, 0, AdjustedControllerValue(ControllerState.RightTriggerAnalog, 0.05f, 0.3f, 1.0f));
 			MessageHandler->OnControllerAnalog(FGamepadKeyNames::MotionController_Left_Thumbstick_X, 0, ControllerState.RollAnalog); // roll
+
+			// buttons
+#if WITH_EDITOR
+			UEditorEngine *EEngine = Cast<UEditorEngine>(GEngine);
+			FEditorViewportClient* ViewportClient = NULL;
+			int32 ViewIndex;
+			for (ViewIndex = 0; ViewIndex < EEngine->AllViewportClients.Num(); ++ViewIndex)
+			{
+				ViewportClient = EEngine->AllViewportClients[ViewIndex];
+				if (ViewportClient && ViewportClient->Viewport->HasFocus()) {
+					//UE_LOG(LogSpaceNav3DController, Display, TEXT("Viewport %d has focus"), ViewIndex);
+					break;
+				}
+			}
+					
+			if ( (ViewIndex < EEngine->AllViewportClients.Num()) && ViewportClient) {
+				const FUIAction* Action = NULL;
+				switch (ControllerState.cmd) {
+				case V3DCMD_VIEW_FIT:
+					Action = ViewportClient->GetEditorViewportWidget()->GetCommandList()->GetActionForCommand(FEditorViewportCommands::Get().FocusViewportToSelection);
+					break;
+				case V3DCMD_VIEW_FRONT:
+					Action = ViewportClient->GetEditorViewportWidget()->GetCommandList()->GetActionForCommand(FEditorViewportCommands::Get().Front);
+					break;
+				case V3DCMD_VIEW_BACK:
+					Action = ViewportClient->GetEditorViewportWidget()->GetCommandList()->GetActionForCommand(FEditorViewportCommands::Get().Back);
+					break;
+				case V3DCMD_VIEW_TOP:
+					Action = ViewportClient->GetEditorViewportWidget()->GetCommandList()->GetActionForCommand(FEditorViewportCommands::Get().Top);
+					break;
+				case V3DCMD_VIEW_LEFT:
+					Action = ViewportClient->GetEditorViewportWidget()->GetCommandList()->GetActionForCommand(FEditorViewportCommands::Get().Left);
+					break;
+				case V3DCMD_VIEW_RIGHT:
+					Action = ViewportClient->GetEditorViewportWidget()->GetCommandList()->GetActionForCommand(FEditorViewportCommands::Get().Right);
+					break;
+				case V3DCMD_VIEW_BOTTOM:
+					Action = ViewportClient->GetEditorViewportWidget()->GetCommandList()->GetActionForCommand(FEditorViewportCommands::Get().Bottom);
+					break;
+				case V3DCMD_VIEW_ISO1:
+					Action = ViewportClient->GetEditorViewportWidget()->GetCommandList()->GetActionForCommand(FEditorViewportCommands::Get().Perspective);
+					break;
+				case V3DCMD_VIEW_ISO2:
+					Action = ViewportClient->GetEditorViewportWidget()->GetCommandList()->GetActionForCommand(FEditorViewportCommands::Get().Perspective);
+					if (Action)
+						Action->Execute();
+					Action = ViewportClient->GetEditorViewportWidget()->GetCommandList()->GetActionForCommand(FEditorViewportCommands::Get().LitMode);
+					//Action = ViewportClient->GetEditorViewportWidget()->GetCommandList()->GetActionForCommand(FEditorViewportCommands::Get().Next);
+					break;
+				default:
+					break;
+				}
+				if (Action)
+					Action->Execute();
+
+				// reset the button states
+				ControllerState.cmd = 0;
+				ControllerState.button_pressed = 0;
+				ControllerState.button_released = 0;
+			}
+#endif // WITH_EDITOR
 		}
 	}
 
@@ -132,6 +193,10 @@ public:
 		float LeftTriggerAnalog;
 		float RightTriggerAnalog;
 		float RollAnalog;
+		int cmd;
+		// 3D connexion SDK buttons, 0 = none
+		int   button_pressed;
+		int   button_released;
 	} ControllerState, PrevControllerState;
 
 	FSpaceNav3DMessageHandler mouse_handler; // 3D mouse events sent to UE window
@@ -151,11 +216,12 @@ static float LongToNormalizedFloat(long AxisVal)
 
 	prenorm *= 0.8;
 
-	if (GIsEditor)
+	if (GIsEditor && !GWorld->HasBegunPlay())
 	{
 		// scale (0,1] into [0.2,1] range to get around hardcoded deadzone in editor
 		return prenorm + (AxisVal <= 0 ? -0.2f : 0.2f);
 	}
+
 	return 3.0*prenorm + (AxisVal <= 0 ? -0.2f : 0.2f);
 }
 
@@ -212,18 +278,36 @@ bool FSpaceNav3DMessageHandler::ProcessMessage(HWND hwnd, uint32 msg, WPARAM wPa
 				controller->bNewEvent = true;
 				break;
 
+			case SI_CMD_EVENT:
+				if (Event.u.cmdEventData.pressed)
+				{
+					SPWuint32 v3dcmd = Event.u.cmdEventData.functionNumber;
+					UE_LOG(LogSpaceNav3DController, Display, TEXT("Si Command Event %d"), v3dcmd);
+					controller->ControllerState.cmd = v3dcmd;
+				}
+				controller->bNewEvent = true;
+				break;
+#if 1
 			case  SI_BUTTON_EVENT:
+				// We latch the button presses - in other words, if a user pushes and releases the button in between engine ticks, it will still get input to the engine eventually
 				if ((num = SiButtonPressed(&Event)) != SI_NO_BUTTON)
 				{
 					// do something when a button is pressed
 					//SiSetLEDs(controller->m_DevHdl, show = !show);  // toggle LEDS on any button
+					controller->ControllerState.button_pressed = num;
+					SPWuint32 v3dkey;
+					SiGetButtonV3DK(controller->m_DevHdl, num, &v3dkey);
+					UE_LOG(LogSpaceNav3DController, Display, TEXT("SiButtonPressed %d, (%d)"), num, v3dkey);
 				}
 				if ((num = SiButtonReleased(&Event)) != SI_NO_BUTTON)
 				{
 					 // do something when a button is released
+					controller->ControllerState.button_released = num;
+					UE_LOG(LogSpaceNav3DController, Display, TEXT("SiButtonReleased %d"), num);
 				}
 				controller->bNewEvent = true;
 				break;
+#endif
 			} /* end switch */
 		} /* end SiGetEvent */
 
