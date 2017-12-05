@@ -155,6 +155,11 @@ public:
 						Action->Execute();
 					Action = ViewportClient->GetEditorViewportWidget()->GetCommandList()->GetActionForCommand(FEditorViewportCommands::Get().LitMode);
 					//Action = ViewportClient->GetEditorViewportWidget()->GetCommandList()->GetActionForCommand(FEditorViewportCommands::Get().Next);
+				case V3DCMD_SCALE_PLUS:
+					Action = ViewportClient->GetEditorViewportWidget()->GetCommandList()->GetActionForCommand(FEditorViewportCommands::Get().Perspective);
+					break;
+				case V3DCMD_SCALE_MINUS:
+					Action = ViewportClient->GetEditorViewportWidget()->GetCommandList()->GetActionForCommand(FEditorViewportCommands::Get().Perspective);
 					break;
 				default:
 					break;
@@ -215,13 +220,14 @@ static float LongToNormalizedFloat(long AxisVal)
 		return 0.0;
 
 	prenorm *= 0.8;
-
-	if (GIsEditor && !GWorld->HasBegunPlay())
+#if WITH_EDITOR
+	UWorld* world = GEditor->GetEditorWorldContext().World();
+	if (GIsEditor && world && !world->HasBegunPlay())
 	{
 		// scale (0,1] into [0.2,1] range to get around hardcoded deadzone in editor
 		return prenorm + (AxisVal <= 0 ? -0.2f : 0.2f);
 	}
-
+#endif
 	return 3.0*prenorm + (AxisVal <= 0 ? -0.2f : 0.2f);
 }
 

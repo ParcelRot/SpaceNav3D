@@ -7,6 +7,7 @@
 #include "WindowsApplication.h"
 #include "Engine/World.h"
 #if WITH_EDITOR
+#include "Editor/UnrealEd/Public/Editor.h"
 #include "Editor/EditorEngine.h"
 #include "SEditorViewport.h"
 #include "EditorViewportClient.h"
