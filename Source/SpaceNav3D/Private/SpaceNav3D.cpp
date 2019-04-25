@@ -21,7 +21,7 @@ class FSpaceNav3DController : public IInputDevice
 public:
 
 	FSpaceNav3DController(const TSharedRef< FGenericApplicationMessageHandler >& InMessageHandler)
-		: MessageHandler(InMessageHandler), bNewEvent(false), m_DevHdl(NULL)
+		: m_DevHdl(NULL), bNewEvent(false), MessageHandler(InMessageHandler)
 	{
 		UE_LOG(LogSpaceNav3DController, Display, TEXT("Input Device creation"));
 		// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
@@ -113,16 +113,16 @@ public:
 			UEditorEngine *EEngine = Cast<UEditorEngine>(GEngine);
 			FEditorViewportClient* ViewportClient = NULL;
 			int32 ViewIndex;
-			for (ViewIndex = 0; ViewIndex < EEngine->AllViewportClients.Num(); ++ViewIndex)
+			for (ViewIndex = 0; ViewIndex < EEngine->GetAllViewportClients().Num(); ++ViewIndex)
 			{
-				ViewportClient = EEngine->AllViewportClients[ViewIndex];
+				ViewportClient = EEngine->GetAllViewportClients()[ViewIndex];
 				if (ViewportClient && ViewportClient->Viewport->HasFocus()) {
 					//UE_LOG(LogSpaceNav3DController, Display, TEXT("Viewport %d has focus"), ViewIndex);
 					break;
 				}
 			}
 					
-			if ( (ViewIndex < EEngine->AllViewportClients.Num()) && ViewportClient) {
+			if ( (ViewIndex < EEngine->GetAllViewportClients().Num()) && ViewportClient) {
 				const FUIAction* Action = NULL;
 				switch (ControllerState.cmd) {
 				case V3DCMD_VIEW_FIT:

@@ -1,4 +1,6 @@
-
 # Ignore temporary build artefacts
 Binaries/
 Intermediate/
+
+#Ignore third party files due to licence restrictions
+Source/ThirdParty/3DxWare SDK
